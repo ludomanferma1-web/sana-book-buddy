@@ -14,13 +14,316 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_logs: {
+        Row: {
+          action: string
+          company_id: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          company_id: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          company_id?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bank_transactions: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          currency: string
+          description: string
+          id: string
+          imported_by: string
+          is_matched: boolean
+          matched_document_id: string | null
+          transaction_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          currency?: string
+          description: string
+          id?: string
+          imported_by: string
+          is_matched?: boolean
+          matched_document_id?: string | null
+          transaction_date: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          currency?: string
+          description?: string
+          id?: string
+          imported_by?: string
+          is_matched?: boolean
+          matched_document_id?: string | null
+          transaction_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bank_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bank_transactions_matched_document_id_fkey"
+            columns: ["matched_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      companies: {
+        Row: {
+          bin_iin: string
+          created_at: string
+          currency: string
+          id: string
+          name: string
+          tax_regime: string
+          updated_at: string
+        }
+        Insert: {
+          bin_iin: string
+          created_at?: string
+          currency?: string
+          id?: string
+          name: string
+          tax_regime: string
+          updated_at?: string
+        }
+        Update: {
+          bin_iin?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          name?: string
+          tax_regime?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          amount: number | null
+          company_id: string
+          counterparty: string | null
+          created_at: string
+          currency: string | null
+          document_date: string | null
+          document_type: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          parsed: Json | null
+          status: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          amount?: number | null
+          company_id: string
+          counterparty?: string | null
+          created_at?: string
+          currency?: string | null
+          document_date?: string | null
+          document_type?: string | null
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          parsed?: Json | null
+          status?: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          amount?: number | null
+          company_id?: string
+          counterparty?: string | null
+          created_at?: string
+          currency?: string | null
+          document_date?: string | null
+          document_type?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          parsed?: Json | null
+          status?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      entries: {
+        Row: {
+          amount: number
+          company_id: string
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          credit_account: string
+          currency: string
+          debit_account: string
+          description: string | null
+          document_id: string | null
+          id: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          credit_account: string
+          currency?: string
+          debit_account: string
+          description?: string | null
+          document_id?: string | null
+          id?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          credit_account?: string
+          currency?: string
+          debit_account?: string
+          description?: string | null
+          document_id?: string | null
+          id?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entries_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entries_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "bank_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_companies: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_companies_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      user_has_company_access: {
+        Args: { company_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
