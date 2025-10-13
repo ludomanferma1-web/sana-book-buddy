@@ -124,6 +124,7 @@ export type Database = {
           name: string
           tax_regime: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           bin_iin: string
@@ -133,6 +134,7 @@ export type Database = {
           name: string
           tax_regime: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           bin_iin?: string
@@ -142,6 +144,7 @@ export type Database = {
           name?: string
           tax_regime?: string
           updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

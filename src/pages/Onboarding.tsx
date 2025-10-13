@@ -30,10 +30,13 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
-      // Create company
+      // Create company with user_id
       const { data: company, error: companyError } = await supabase
         .from('companies')
-        .insert([formData])
+        .insert([{
+          ...formData,
+          user_id: user.id
+        }])
         .select()
         .single();
 
