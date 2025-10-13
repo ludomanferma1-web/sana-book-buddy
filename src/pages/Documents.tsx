@@ -7,10 +7,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Upload, FileText, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Loader2, CheckCircle2, AlertCircle, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Document } from '@/types/database';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 
 const Documents = () => {
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ const Documents = () => {
       if (uploadError) throw uploadError;
 
       // Create document record
-      const { error: insertError } = await supabase
+      const { data: insertedDoc, error: insertError } = await supabase
         .from('documents')
         .insert([{
           company_id: currentCompany.id,
@@ -75,12 +76,41 @@ const Documents = () => {
           file_size: file.size,
           mime_type: file.type,
           status: 'uploaded'
-        }]);
+        }])
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
-      toast.success('Документ загружен успешно');
+      toast.success('Документ загружен успешно. Начинается обработка...');
       loadDocuments();
+
+      // Trigger OCR processing
+      if (insertedDoc) {
+        const session = await supabase.auth.getSession();
+        fetch(`https://kxwpvhlofbxvhecckmet.supabase.co/functions/v1/process-document`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.data.session?.access_token}`,
+          },
+          body: JSON.stringify({ documentId: insertedDoc.id }),
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            toast.success('Документ обработан успешно' + (data.matched ? ' и сопоставлен с транзакцией!' : ''));
+          } else {
+            toast.error('Ошибка обработки документа');
+          }
+          loadDocuments();
+        })
+        .catch(err => {
+          console.error('OCR error:', err);
+          toast.error('Ошибка обработки документа');
+          loadDocuments();
+        });
+      }
     } catch (error: any) {
       toast.error(error.message || 'Ошибка загрузки файла');
     } finally {
@@ -160,21 +190,49 @@ const Documents = () => {
               </CardContent>
             </Card>
           ) : (
-            documents.map((doc) => (
-              <Card key={doc.id} className="transition-base hover:shadow-md">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="flex items-center gap-4">
-                    <FileText className="h-10 w-10 text-primary" />
-                    <div>
-                      <h4 className="font-medium">{doc.file_name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {formatFileSize(doc.file_size)} • {new Date(doc.created_at).toLocaleDateString('ru-RU')}
-                      </p>
+            documents.map((doc, index) => (
+              <motion.div
+                key={doc.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+              >
+                <Card className="transition-base hover:shadow-md">
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <FileText className="h-10 w-10 text-primary" />
+                        <div>
+                          <h4 className="font-medium">{doc.file_name}</h4>
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(doc.file_size)} • {new Date(doc.created_at).toLocaleDateString('ru-RU')}
+                          </p>
+                        </div>
+                      </div>
+                      {getStatusBadge(doc.status)}
                     </div>
-                  </div>
-                  {getStatusBadge(doc.status)}
-                </CardContent>
-              </Card>
+                    {doc.parsed && doc.status === 'done' && (
+                      <div className="mt-4 p-3 bg-muted rounded-lg space-y-2">
+                        <p className="text-sm font-medium">Распознанные данные:</p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {doc.document_type && (
+                            <div><span className="text-muted-foreground">Тип:</span> {doc.document_type}</div>
+                          )}
+                          {doc.amount && (
+                            <div><span className="text-muted-foreground">Сумма:</span> {doc.amount} {doc.currency}</div>
+                          )}
+                          {doc.document_date && (
+                            <div><span className="text-muted-foreground">Дата:</span> {new Date(doc.document_date).toLocaleDateString('ru-RU')}</div>
+                          )}
+                          {doc.counterparty && (
+                            <div><span className="text-muted-foreground">Контрагент:</span> {doc.counterparty}</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))
           )}
         </div>

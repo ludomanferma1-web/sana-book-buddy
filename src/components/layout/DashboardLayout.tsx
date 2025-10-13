@@ -11,7 +11,8 @@ import {
   MessageSquare, 
   Settings, 
   LogOut,
-  Building2
+  Building2,
+  Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Документы', href: '/documents', icon: FileText },
   { title: 'Транзакции', href: '/transactions', icon: CreditCard },
+  { title: 'Проводки', href: '/entries', icon: Receipt },
   { title: 'Отчёты', href: '/reports', icon: BarChart3 },
   { title: 'Помощник', href: '/assistant', icon: MessageSquare },
   { title: 'Настройки', href: '/settings', icon: Settings },

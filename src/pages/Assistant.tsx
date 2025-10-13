@@ -7,21 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Send, User, Bot } from 'lucide-react';
+import { MessageSquare, Send, User, Bot, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
-};
-
-const PREDEFINED_RESPONSES: Record<string, string> = {
-  'как провести': 'Для проведения документа: загрузите его через раздел "Документы", система автоматически распознает сумму и предложит проводку. Затем в разделе "Транзакции" подтвердите или отредактируйте предложенную проводку.',
-  'налог': 'Для расчёта налога используйте раздел "Отчёты". Выберите период, и система покажет доходы, расходы и примерную сумму налога по вашему режиму (УСН/ОСН).',
-  'выписка': 'Для импорта банковской выписки: перейдите в "Транзакции", загрузите CSV файл с колонками: дата, описание, сумма, валюта. Система автоматически импортирует транзакции.',
-  'документ': 'Вы можете загружать документы в формате PDF, JPG, PNG до 10MB. Система распознает основную информацию: сумму, дату, контрагента и предложит соответствующую проводку.',
-  'проводка': 'Проводка - это бухгалтерская запись операции. Sana автоматически предлагает проводки на основе загруженных документов и банковских транзакций. Вы можете подтвердить, отредактировать или отклонить предложенную проводку.',
 };
 
 const Assistant = () => {
@@ -37,6 +31,7 @@ const Assistant = () => {
     }
   ]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,8 +44,8 @@ const Assistant = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -60,29 +55,100 @@ const Assistant = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
 
-    // Find matching response
-    let response = 'Спасибо за вопрос! В MVP версии я могу помочь с базовыми вопросами. Попробуйте спросить про: проведение документов, налоги, выписки, или загрузку документов.';
-    
-    const lowerInput = input.toLowerCase();
-    for (const [key, value] of Object.entries(PREDEFINED_RESPONSES)) {
-      if (lowerInput.includes(key)) {
-        response = value;
-        break;
+    try {
+      const response = await fetch(`https://kxwpvhlofbxvhecckmet.supabase.co/functions/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+        body: JSON.stringify({
+          messages: messages.concat(userMessage).map(m => ({ role: m.role, content: m.content })),
+          companyId: currentCompany?.id,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 429) {
+          toast.error('Превышен лимит запросов, попробуйте позже.');
+          return;
+        }
+        if (response.status === 402) {
+          toast.error('Требуется пополнить баланс Lovable AI.');
+          return;
+        }
+        throw new Error('AI service error');
       }
-    }
 
-    setTimeout(() => {
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = '';
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response,
+        content: '',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, assistantMessage]);
-    }, 500);
 
-    setInput('');
+      if (reader) {
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          
+          let newlineIndex;
+          while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+            let line = buffer.slice(0, newlineIndex);
+            buffer = buffer.slice(newlineIndex + 1);
+            
+            if (line.endsWith('\r')) line = line.slice(0, -1);
+            if (line.startsWith(':') || line.trim() === '') continue;
+            if (!line.startsWith('data: ')) continue;
+            
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === '[DONE]') break;
+            
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                assistantContent += content;
+                setMessages(prev => 
+                  prev.map(m => 
+                    m.id === assistantMessage.id 
+                      ? { ...m, content: assistantContent }
+                      : m
+                  )
+                );
+              }
+            } catch (e) {
+              buffer = line + '\n' + buffer;
+              break;
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Chat error:', error);
+      toast.error('Ошибка при общении с AI помощником');
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Извините, произошла ошибка. Попробуйте еще раз.',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -183,9 +249,14 @@ const Assistant = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Напишите ваш вопрос..."
                 className="flex-1"
+                disabled={isLoading}
               />
-              <Button onClick={handleSend} disabled={!input.trim()}>
-                <Send className="h-4 w-4" />
+              <Button onClick={handleSend} disabled={!input.trim() || isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </CardContent>

@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_history: {
+        Row: {
+          company_id: string
+          created_at: string
+          id: string
+          messages: Json
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          id?: string
+          messages: Json
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          id?: string
+          messages?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_history_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
@@ -323,6 +355,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_ai_context: {
+        Args: { _company_id: string }
+        Returns: Json
+      }
+      get_transactions_summary: {
+        Args: { _company_id: string; _end_date: string; _start_date: string }
+        Returns: {
+          balance: number
+          count: number
+          expense: number
+          income: number
+        }[]
+      }
+      match_document_with_transaction: {
+        Args: { _document_id: string }
+        Returns: Json
+      }
       user_has_company_access: {
         Args: { company_id: string }
         Returns: boolean

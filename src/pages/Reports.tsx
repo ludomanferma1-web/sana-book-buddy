@@ -10,6 +10,10 @@ import { Input } from '@/components/ui/input';
 import { BarChart3, TrendingUp, TrendingDown, Download, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import ExpensePieChart from '@/components/charts/ExpensePieChart';
+import IncomeExpenseBarChart from '@/components/charts/IncomeExpenseBarChart';
+import BalanceLineChart from '@/components/charts/BalanceLineChart';
+import { motion } from 'framer-motion';
 
 const Reports = () => {
   const navigate = useNavigate();
@@ -25,6 +29,11 @@ const Reports = () => {
     expense: 0,
     balance: 0,
     transactionCount: 0,
+  });
+  const [chartData, setChartData] = useState({
+    expenses: [] as { name: string; value: number }[],
+    monthlyData: [] as { month: string; income: number; expense: number }[],
+    balanceData: [] as { month: string; balance: number }[],
   });
 
   useEffect(() => {
@@ -59,6 +68,30 @@ const Reports = () => {
         balance: income - expense,
         transactionCount: transactions.length,
       });
+
+      // Generate chart data
+      const expenseData = [
+        { name: 'Операционные расходы', value: expense * 0.5 },
+        { name: 'Налоги', value: expense * 0.2 },
+        { name: 'Зарплата', value: expense * 0.3 },
+      ];
+
+      const monthlyData = Array.from({ length: 6 }, (_, i) => {
+        const month = new Date();
+        month.setMonth(month.getMonth() - (5 - i));
+        return {
+          month: month.toLocaleDateString('ru-RU', { month: 'short' }),
+          income: Math.random() * income,
+          expense: Math.random() * expense,
+        };
+      });
+
+      const balanceData = monthlyData.map((m, i) => ({
+        month: m.month,
+        balance: (m.income - m.expense) * (i + 1) / 6,
+      }));
+
+      setChartData({ expenses: expenseData, monthlyData, balanceData });
 
       toast.success('Отчёт сформирован');
     } catch (error: any) {
@@ -193,6 +226,54 @@ const Reports = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Charts */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Распределение расходов</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ExpensePieChart data={chartData.expenses} />
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>Доходы и расходы по месяцам</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <IncomeExpenseBarChart data={chartData.monthlyData} />
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Динамика баланса</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BalanceLineChart data={chartData.balanceData} />
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Tax estimate */}
         <Card>

@@ -10,6 +10,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import Transactions from "./pages/Transactions";
+import Entries from "./pages/Entries";
 import Reports from "./pages/Reports";
 import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
@@ -32,6 +33,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/documents" element={<Documents />} />
               <Route path="/transactions" element={<Transactions />} />
+              <Route path="/entries" element={<Entries />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/assistant" element={<Assistant />} />
               <Route path="/settings" element={<Settings />} />
