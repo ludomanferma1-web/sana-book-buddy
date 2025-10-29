@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DemoBanner } from '@/components/layout/DemoBanner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,19 +16,17 @@ import { motion } from 'framer-motion';
 
 const Documents = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { currentCompany } = useCompany();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    } else if (currentCompany) {
+    if (currentCompany) {
       loadDocuments();
     }
-  }, [user, currentCompany]);
+  }, [currentCompany]);
 
   const loadDocuments = async () => {
     if (!currentCompany) return;
@@ -141,6 +140,8 @@ const Documents = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {isDemoMode && <DemoBanner />}
+        
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Документы</h2>
@@ -168,10 +169,10 @@ const Documents = () => {
             />
             <Button
               onClick={() => document.getElementById('file-upload')?.click()}
-              disabled={uploading}
+              disabled={uploading || isDemoMode}
             >
               {uploading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Выбрать файл
+              {isDemoMode ? 'Доступно после регистрации' : 'Выбрать файл'}
             </Button>
           </CardContent>
         </Card>

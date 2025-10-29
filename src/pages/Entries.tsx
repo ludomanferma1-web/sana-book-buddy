@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DemoBanner } from '@/components/layout/DemoBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,19 +15,17 @@ import { motion } from 'framer-motion';
 
 const Entries = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { currentCompany } = useCompany();
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<'all' | 'suggested' | 'confirmed' | 'rejected'>('all');
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    } else if (currentCompany) {
+    if (currentCompany) {
       loadEntries();
     }
-  }, [user, currentCompany, filter]);
+  }, [currentCompany, filter]);
 
   const loadEntries = async () => {
     if (!currentCompany) return;
@@ -132,6 +131,8 @@ const Entries = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {isDemoMode && <DemoBanner />}
+        
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Проводки</h2>
@@ -230,13 +231,15 @@ const Entries = () => {
                             size="sm"
                             onClick={() => handleConfirm(entry.id)}
                             className="bg-green-600 hover:bg-green-700"
+                            disabled={isDemoMode}
                           >
-                            Подтвердить
+                            {isDemoMode ? 'Доступно после регистрации' : 'Подтвердить'}
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => handleReject(entry.id)}
+                            disabled={isDemoMode}
                           >
                             Отклонить
                           </Button>

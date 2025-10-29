@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DemoBanner } from '@/components/layout/DemoBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,19 +15,17 @@ import { toast } from 'sonner';
 
 const Transactions = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { currentCompany } = useCompany();
   const [transactions, setTransactions] = useState<BankTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
-    } else if (currentCompany) {
+    if (currentCompany) {
       loadTransactions();
     }
-  }, [user, currentCompany]);
+  }, [currentCompany]);
 
   const loadTransactions = async () => {
     if (!currentCompany) return;
@@ -105,6 +104,8 @@ const Transactions = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {isDemoMode && <DemoBanner />}
+        
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">Банковские транзакции</h2>
@@ -132,10 +133,10 @@ const Transactions = () => {
             />
             <Button
               onClick={() => document.getElementById('csv-import')?.click()}
-              disabled={importing}
+              disabled={importing || isDemoMode}
             >
               {importing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Выбрать CSV файл
+              {isDemoMode ? 'Доступно после регистрации' : 'Выбрать CSV файл'}
             </Button>
           </CardContent>
         </Card>

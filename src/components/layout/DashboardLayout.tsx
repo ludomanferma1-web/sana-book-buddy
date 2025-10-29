@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,7 @@ type DashboardLayoutProps = {
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { currentCompany } = useCompany();
   const currentPath = window.location.pathname;
 
@@ -72,15 +72,31 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </div>
           )}
 
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" />
-            Выйти
-          </Button>
+          {isDemoMode ? (
+            <Link to="/auth">
+              <Button variant="default" size="sm">
+                Войти / Регистрация
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Выйти
+            </Button>
+          )}
         </div>
       </header>
 
       {/* Main content with sidebar */}
       <div className="container px-4 py-6">
+        {isDemoMode && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg text-center">
+            <p className="text-sm">
+              💡 Это демо-версия Sana. <Link to="/auth" className="underline font-medium text-primary hover:text-primary-hover">Создайте аккаунт</Link> для полного доступа ко всем функциям.
+            </p>
+          </div>
+        )}
+        
         <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-6">
           {/* Sidebar navigation */}
           <nav className="space-y-1">

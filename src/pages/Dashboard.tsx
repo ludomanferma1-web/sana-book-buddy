@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, isDemoMode } = useAuth();
   const { currentCompany, companies, loading: companyLoading } = useCompany();
   const [stats, setStats] = useState({
     documents: 0,
@@ -19,11 +19,7 @@ const Dashboard = () => {
     processedToday: 0,
   });
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/auth');
-    }
-  }, [user, authLoading, navigate]);
+  // No redirect needed - demo mode allows access without auth
 
   useEffect(() => {
     if (!companyLoading && companies.length === 0 && user) {

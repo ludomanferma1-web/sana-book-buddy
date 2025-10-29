@@ -20,7 +20,7 @@ type Message = {
 
 const Assistant = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { currentCompany } = useCompany();
   const [messages, setMessages] = useState<Message[]>([
     {

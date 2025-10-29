@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { DemoBanner } from '@/components/layout/DemoBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,7 @@ import { toast } from 'sonner';
 
 const Settings = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const { currentCompany, refreshCompanies } = useCompany();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -71,6 +72,8 @@ const Settings = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {isDemoMode && <DemoBanner />}
+        
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Настройки</h2>
           <p className="text-muted-foreground mt-1">
@@ -147,10 +150,10 @@ const Settings = () => {
               </Select>
             </div>
 
-            <Button onClick={handleSave} disabled={loading}>
+            <Button onClick={handleSave} disabled={loading || isDemoMode}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Save className="mr-2 h-4 w-4" />
-              Сохранить изменения
+              {isDemoMode ? 'Доступно после регистрации' : 'Сохранить изменения'}
             </Button>
           </CardContent>
         </Card>

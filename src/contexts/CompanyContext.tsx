@@ -27,13 +27,30 @@ export const useCompany = () => {
   return context;
 };
 
+const DEMO_COMPANY: Company = {
+  id: '00000000-0000-0000-0000-000000000001',
+  name: 'Demo Компания',
+  bin_iin: '000000000000',
+  tax_regime: 'USN',
+  currency: 'KZT',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
 export const CompanyProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, isDemoMode } = useAuth();
   const [currentCompany, setCurrentCompany] = useState<Company | null>(null);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refreshCompanies = async () => {
+    if (isDemoMode) {
+      setCompanies([DEMO_COMPANY]);
+      setCurrentCompany(DEMO_COMPANY);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setCompanies([]);
       setCurrentCompany(null);
@@ -80,7 +97,7 @@ export const CompanyProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     refreshCompanies();
-  }, [user]);
+  }, [user, isDemoMode]);
 
   return (
     <CompanyContext.Provider value={{ 
